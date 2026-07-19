@@ -1,1 +1,95 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local AutoFarm = false
+
+local Window = Rayfield:CreateWindow({
+    Name = "Maple Hub",
+    LoadingTitle = "Maple Hub",
+    LoadingSubtitle = "by Maple",
+
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MapleHub",
+        FileName = "Config"
+    },
+
+    Discord = {
+        Enabled = false
+    },
+
+    KeySystem = false
+})
+
+local MainTab = Window:CreateTab("Main", "leaf")
+MainTab:CreateSection("Farm Settings")
+
+local AutoFarm = false
+
+MainTab:CreateToggle({
+    Name = "TP Ginseng",
+    CurrentValue = false,
+    Flag = "TPGinseng",
+    Callback = function(Value)
+        AutoFarm = Value
+
+        if not Value then
+            return
+        end
+
+        task.spawn(function()
+            while AutoFarm do
+                for _, plant in ipairs(workspace.Plants:GetChildren()) do
+                    if not AutoFarm then
+                        break
+                    end
+
+                    if plant.Name == "Ginseng" then
+                        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        local target = plant.PrimaryPart
+                            or plant:FindFirstChildWhichIsA("BasePart")
+
+                        if root and target then
+                            root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+
+                            -- รอแบบหยุดได้ทันที
+                            for i = 1, 10 do
+                                if not AutoFarm then
+                                    break
+                                end
+                                task.wait(0.1)
+                            end
+                        end
+                    end
+                end
+                task.wait()
+            end
+        end)
+    end
+})
+
+local Getseed = false
+
+MainTab:CreateToggle({
+    Name = "Get seed",
+    CurrentValue = false,
+    Flag = "Getseed",
+    Callback = function(Value)
+        Getseed = Value
+    end
+})
+
+local Event = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("CollectHerb")
+
+task.spawn(function()
+    while true do
+        if Getseed then
+            for _, plant in ipairs(workspace:WaitForChild("Plants"):GetChildren()) do
+                Event:FireServer(plant)
+            end
+        end
+        task.wait(1) -- ปรับเวลาตามต้องการ
+    end
+end)
